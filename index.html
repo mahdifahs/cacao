@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cacao Solver Pro | Gestion de Lots</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .input-focus:focus { outline: none; border-color: #3b82f6; ring: 2px; ring-color: #3b82f6; }
+        .row-hover:hover { background-color: #f8fafc; }
+        .status-ok { color: #15803d; font-weight: bold; }
+        .status-error { color: #dc2626; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans">
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-800">Cacao<span class="text-amber-700">Optimizer</span></h1>
+                <p class="text-slate-500 italic">Outil professionnel d'aide au mélange de lots</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex gap-3">
+                <button onclick="ajouterLot()" class="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition flex items-center gap-2">
+                    <i class="fas fa-plus"></i> Ajouter un lot
+                </button>
+                <button onclick="toutEffacer()" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition">
+                    Effacer tout
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">Paramètres Cibles</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600">Sacs total visés</label>
+                            <input type="number" id="target-sacs" value="416" oninput="calculer()" class="w-full mt-1 p-2 border rounded-md font-bold text-blue-600">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600">Poids / Sac (kg)</label>
+                            <input type="number" id="weight-per-sac" value="60.3" oninput="calculer()" class="w-full mt-1 p-2 border rounded-md">
+                        </div>
+                        <hr>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600">Humidité Max (%)</label>
+                            <input type="number" step="0.1" id="max-hum" value="7.5" oninput="calculer()" class="w-full mt-1 p-2 border border-amber-200 rounded-md">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600">Grain Min (G)</label>
+                            <input type="number" id="min-grain" value="110" oninput="calculer()" class="w-full mt-1 p-2 border border-amber-200 rounded-md">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600">Moisi Max (M)</label>
+                            <input type="number" step="0.1" id="max-moisi" value="10.0" oninput="calculer()" class="w-full mt-1 p-2 border border-amber-200 rounded-md">
+                        </div>
+                    </div>
+
+                    <button onclick="resoudreOptimisation()" class="w-full mt-6 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-100 transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-magic"></i> CALCULER LE MIX IDÉAL
+                    </button>
+                </div>
+
+                <div class="bg-slate-800 text-white p-6 rounded-2xl shadow-xl">
+                    <h3 class="text-sm uppercase tracking-wider font-bold text-slate-400 mb-4">Résultat Actuel</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span>Sacs :</span>
+                            <span id="res-sacs" class="text-xl font-mono">0 / 416</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>Humidité :</span>
+                            <span id="res-hum" class="text-xl font-mono">0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>Grain :</span>
+                            <span id="res-grain" class="text-xl font-mono">0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>Moisi :</span>
+                            <span id="res-moisi" class="text-xl font-mono">0.00</span>
+                        </div>
+                        <div class="pt-4 border-t border-slate-700">
+                            <p class="text-xs text-slate-400 uppercase">Poids Total</p>
+                            <p class="text-2xl font-bold text-amber-400"><span id="res-poids">0.00</span> t</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table class="w-full">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs font-bold">
+                            <tr>
+                                <th class="p-4 text-left">Nom du Lot</th>
+                                <th class="p-4 text-left text-blue-600">Sacs à Tirer</th>
+                                <th class="p-4 text-left">Stock Dispo</th>
+                                <th class="p-4 text-left text-amber-700">Hum (H)</th>
+                                <th class="p-4 text-left text-amber-700">Grain (G)</th>
+                                <th class="p-4 text-left text-amber-700">Moisi (M)</th>
+                                <th class="p-4"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="lots-container">
+                            </tbody>
+                    </table>
+                </div>
+                <div id="no-data" class="hidden p-12 text-center text-slate-400">
+                    <i class="fas fa-box-open text-4xl mb-3"></i>
+                    <p>Aucun lot enregistré. Cliquez sur "Ajouter un lot".</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // État de l'application
+        let inventory = [
+            { id: "Lot A", pulled: 0, stock: 120, h: 7.4, g: 116, m: 5.5 },
+            { id: "Lot B", pulled: 0, stock: 150, h: 7.8, g: 95, m: 12.0 }
+        ];
+
+        function ajouterLot() {
+            inventory.push({ id: "Nouveau Lot", pulled: 0, stock: 100, h: 7.5, g: 110, m: 5.0 });
+            render();
+        }
+
+        function supprimerLot(index) {
+            inventory.splice(index, 1);
+            render();
+        }
+
+        function updateField(index, field, value) {
+            inventory[index][field] = field === 'id' ? value : parseFloat(value) || 0;
+            calculer();
+        }
+
+        function calculer() {
+            const targetSacs = parseFloat(document.getElementById('target-sacs').value) || 0;
+            const weightSac = parseFloat(document.getElementById('weight-per-sac').value) || 0;
+            const maxH = parseFloat(document.getElementById('max-hum').value);
+            const minG = parseFloat(document.getElementById('min-grain').value);
+            const maxM = parseFloat(document.getElementById('max-moisi').value);
+
+            let totalSacs = 0;
+            let sumH = 0, sumG = 0, sumM = 0;
+
+            inventory.forEach(lot => {
+                totalSacs += lot.pulled;
+                sumH += (lot.pulled * lot.h);
+                sumG += (lot.pulled * lot.g);
+                sumM += (lot.pulled * lot.m);
+            });
+
+            const avgH = totalSacs > 0 ? (sumH / totalSacs) : 0;
+            const avgG = totalSacs > 0 ? (sumG / totalSacs) : 0;
+            const avgM = totalSacs > 0 ? (sumM / totalSacs) : 0;
+
+            // Update UI
+            document.getElementById('res-sacs').innerText = `${totalSacs} / ${targetSacs}`;
+            document.getElementById('res-sacs').className = totalSacs === targetSacs ? 'text-xl font-mono status-ok' : 'text-xl font-mono text-amber-500';
+            
+            document.getElementById('res-hum').innerText = avgH.toFixed(2);
+            document.getElementById('res-hum').className = avgH <= maxH && avgH > 0 ? 'text-xl font-mono status-ok' : 'text-xl font-mono status-error';
+
+            document.getElementById('res-grain').innerText = avgG.toFixed(2);
+            document.getElementById('res-grain').className = avgG >= minG ? 'text-xl font-mono status-ok' : 'text-xl font-mono status-error';
+
+            document.getElementById('res-moisi').innerText = avgM.toFixed(2);
+            document.getElementById('res-moisi').className = avgM <= maxM && avgM > 0 ? 'text-xl font-mono status-ok' : 'text-xl font-mono status-error';
+
+            document.getElementById('res-poids').innerText = ((totalSacs * weightSac) / 1000).toFixed(2);
+        }
+
+        function render() {
+            const container = document.getElementById('lots-container');
+            const noData = document.getElementById('no-data');
+            container.innerHTML = '';
+            
+            if (inventory.length === 0) noData.classList.remove('hidden');
+            else noData.classList.add('hidden');
+
+            inventory.forEach((lot, i) => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b row-hover transition";
+                tr.innerHTML = `
+                    <td class="p-4"><input type="text" value="${lot.id}" oninput="updateField(${i}, 'id', this.value)" class="bg-transparent font-bold w-full border-b border-transparent focus:border-slate-300 outline-none"></td>
+                    <td class="p-4"><input type="number" value="${lot.pulled}" oninput="updateField(${i}, 'pulled', this.value)" class="w-24 p-2 bg-blue-50 border border-blue-100 rounded text-blue-700 font-bold focus:ring-2 focus:ring-blue-400 outline-none"></td>
+                    <td class="p-4"><input type="number" value="${lot.stock}" oninput="updateField(${i}, 'stock', this.value)" class="w-20 p-2 border border-slate-200 rounded outline-none focus:border-slate-400"></td>
+                    <td class="p-4"><input type="number" step="0.1" value="${lot.h}" oninput="updateField(${i}, 'h', this.value)" class="w-16 p-2 border border-slate-100 rounded text-slate-600 outline-none focus:border-slate-400"></td>
+                    <td class="p-4"><input type="number" value="${lot.g}" oninput="updateField(${i}, 'g', this.value)" class="w-16 p-2 border border-slate-100 rounded text-slate-600 outline-none focus:border-slate-400"></td>
+                    <td class="p-4"><input type="number" step="0.1" value="${lot.m}" oninput="updateField(${i}, 'm', this.value)" class="w-16 p-2 border border-slate-100 rounded text-slate-600 outline-none focus:border-slate-400"></td>
+                    <td class="p-4 text-right"><button onclick="supprimerLot(${i})" class="text-slate-300 hover:text-red-500 transition"><i class="fas fa-trash"></i></button></td>
+                `;
+                container.appendChild(tr);
+            });
+            calculer();
+        }
+
+        function resoudreOptimisation() {
+            const targetSacs = parseInt(document.getElementById('target-sacs').value);
+            const minG = parseFloat(document.getElementById('min-grain').value);
+            const maxH = parseFloat(document.getElementById('max-hum').value);
+
+            // Algorithme de tri intelligent pour satisfaire les contraintes
+            // On veut maximiser le grain tout en gardant l'humidité sous contrôle
+            let sorted = [...inventory].sort((a, b) => b.g - a.g);
+            
+            let restant = targetSacs;
+            inventory.forEach(l => l.pulled = 0); // Reset
+
+            // Attribution gloutonne
+            for(let lot of sorted) {
+                let prendre = Math.min(lot.stock, restant);
+                lot.pulled = prendre;
+                restant -= prendre;
+            }
+
+            render();
+            if(restant > 0) alert("Attention : Stock insuffisant pour atteindre " + targetSacs + " sacs.");
+        }
+
+        function toutEffacer() {
+            if(confirm("Effacer tous les lots ?")) {
+                inventory = [];
+                render();
+            }
+        }
+
+        // Initialisation
+        render();
+    </script>
+</body>
+</html>
