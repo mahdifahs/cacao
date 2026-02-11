@@ -8,8 +8,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .gradient-bg { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
-        .input-smart:focus { border-color: #fbbf24; ring: 2px; ring-color: #fbbf24; outline: none; }
-        .status-pill { transition: all 0.3s ease; }
+        .input-ghost { 
+            background: transparent; 
+            border: none; 
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            color: #fbbf24;
+            font-family: monospace;
+            font-weight: bold;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .input-ghost:focus { border-bottom-color: #fbbf24; background: rgba(255,255,255,0.05); }
         input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
     </style>
 </head>
@@ -19,11 +28,11 @@
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                    <h1 class="text-4xl font-black tracking-tight">CACAO<span class="text-amber-500">OPTIMIZER</span> <span class="text-xs bg-amber-500 text-black px-2 py-1 rounded ml-2">GOAT v2</span></h1>
-                    <p class="text-slate-400 mt-1">Intelligence artificielle de mixage et gestion de stock</p>
+                    <h1 class="text-4xl font-black tracking-tight text-white">CACAO<span class="text-amber-500">OPTIMIZER</span> <span class="text-xs bg-amber-500 text-black px-2 py-1 rounded ml-2">GOAT v2</span></h1>
+                    <p class="text-slate-400 mt-1">Intelligence artificielle de mixage - Mode Manuel & Auto</p>
                 </div>
                 <div class="flex gap-3">
-                    <button onclick="ajouterLot()" class="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-xl transition flex items-center gap-2 text-sm">
+                    <button onclick="ajouterLot()" class="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-xl transition flex items-center gap-2 text-sm text-white">
                         <i class="fas fa-plus text-amber-500"></i> Ajouter Lot
                     </button>
                     <button onclick="resoudreOptimisation()" class="bg-amber-500 hover:bg-amber-600 text-black font-bold px-6 py-2 rounded-xl shadow-lg shadow-amber-500/20 transition transform hover:scale-105 flex items-center gap-2">
@@ -37,30 +46,31 @@
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-10">
                 <div class="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-md">
-                    <p class="text-slate-400 text-xs uppercase font-bold mb-1">Total Sacs Cible</p>
-                    <input type="number" id="target-sacs" value="416" oninput="calculer()" class="bg-transparent text-3xl font-mono font-bold text-amber-500 w-full outline-none">
-                    <div class="w-full bg-white/10 h-1 mt-3 rounded-full overflow-hidden">
-                        <div id="bar-sacs" class="bg-amber-500 h-full transition-all" style="width: 0%"></div>
-                    </div>
+                    <p class="text-slate-400 text-xs uppercase font-bold mb-1 italic">Nombre de Sacs Total</p>
+                    <input type="number" id="target-sacs" value="416" oninput="calculer()" class="input-ghost text-3xl w-full">
+                    <p class="text-[10px] mt-2 text-slate-500 font-bold uppercase" id="info-sacs">Progression: 0%</p>
                 </div>
+                
                 <div class="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-md">
-                    <p class="text-slate-400 text-xs uppercase font-bold mb-1">Moyenne Humidité (H)</p>
-                    <div class="flex items-baseline gap-2">
-                        <span id="res-hum" class="text-3xl font-mono font-bold">0.00</span>
-                        <span class="text-slate-500">/ <input type="number" step="0.1" id="max-hum" value="7.5" oninput="calculer()" class="bg-transparent w-12 outline-none"> %</span>
+                    <p class="text-slate-400 text-xs uppercase font-bold mb-1 italic">Objectif Humidité (H) MAX</p>
+                    <div class="flex items-center gap-2">
+                        <input type="number" step="0.1" id="max-hum" value="7.5" oninput="calculer()" class="input-ghost text-3xl w-24">
+                        <span class="text-slate-500 text-xl font-bold">%</span>
                     </div>
-                    <p id="stat-hum" class="text-[10px] mt-2 font-bold uppercase"></p>
+                    <p id="res-hum-display" class="text-[10px] mt-2 font-bold uppercase">Moyenne actuelle: 0.00</p>
                 </div>
+
                 <div class="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-md">
-                    <p class="text-slate-400 text-xs uppercase font-bold mb-1">Moyenne Grain (G)</p>
-                    <div class="flex items-baseline gap-2">
-                        <span id="res-grain" class="text-3xl font-mono font-bold">0.00</span>
-                        <span class="text-slate-500">> <input type="number" id="min-grain" value="110" oninput="calculer()" class="bg-transparent w-12 outline-none"></span>
+                    <p class="text-slate-400 text-xs uppercase font-bold mb-1 italic">Objectif Grainage (G) MIN</p>
+                    <div class="flex items-center gap-2 text-white">
+                        <span class="text-slate-500 text-xl font-bold">></span>
+                        <input type="number" id="min-grain" value="110" oninput="calculer()" class="input-ghost text-3xl w-24">
                     </div>
-                    <p id="stat-grain" class="text-[10px] mt-2 font-bold uppercase"></p>
+                    <p id="res-grain-display" class="text-[10px] mt-2 font-bold uppercase font-white">Moyenne actuelle: 0.00</p>
                 </div>
+
                 <div class="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-md">
-                    <p class="text-slate-400 text-xs uppercase font-bold mb-1">Poids Total (P.NET)</p>
+                    <p class="text-slate-400 text-xs uppercase font-bold mb-1 italic text-emerald-400">Poids Total Estimé</p>
                     <div class="flex items-baseline gap-2">
                         <span id="res-poids" class="text-3xl font-mono font-bold text-emerald-400">0.00</span>
                         <span class="text-slate-500">Tonnes</span>
@@ -87,14 +97,12 @@
                             <th class="p-5 text-center">Action</th>
                         </tr>
                     </thead>
-                    <tbody id="lots-container" class="divide-y divide-gray-100">
-                        </tbody>
+                    <tbody id="lots-container" class="divide-y divide-gray-100 font-white text-black">
+                    </tbody>
                 </table>
             </div>
-            <div id="no-data" class="hidden p-20 text-center">
-                <div class="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-folder-open text-gray-300 text-2xl"></i>
-                </div>
+            <div id="no-data" class="hidden p-20 text-center text-black">
+                <i class="fas fa-folder-open text-gray-300 text-4xl mb-4"></i>
                 <p class="text-gray-400 font-medium">L'inventaire est vide.</p>
             </div>
         </div>
@@ -137,30 +145,23 @@
                 sumG += (lot.pulled * lot.g);
                 sumM += (lot.pulled * lot.m);
                 
-                // Update row Qty in real-time
                 const qtyEl = document.getElementById(`qty-${i}`);
                 if(qtyEl) qtyEl.innerText = (lot.pulled * KILO_FIXE).toLocaleString(undefined, {minimumFractionDigits: 1});
             });
 
             const avgH = totalSacs > 0 ? (sumH / totalSacs) : 0;
             const avgG = totalSacs > 0 ? (sumG / totalSacs) : 0;
-            const avgM = totalSacs > 0 ? (sumM / totalSacs) : 0;
 
-            // Update UI dashboard
-            document.getElementById('res-sacs').innerText = `${totalSacs} / ${targetSacs}`;
-            document.getElementById('bar-sacs').style.width = Math.min((totalSacs/targetSacs)*100, 100) + '%';
+            // UI Updates
+            document.getElementById('info-sacs').innerText = `Progression: ${Math.round((totalSacs/targetSacs)*100 || 0)}% (${totalSacs} sacs)`;
             
-            const hEl = document.getElementById('res-hum');
-            hEl.innerText = avgH.toFixed(2);
-            hEl.className = `text-3xl font-mono font-bold ${avgH <= maxH && totalSacs > 0 ? 'text-emerald-400' : 'text-red-500'}`;
-            document.getElementById('stat-hum').innerText = avgH <= maxH ? "Qualité Validée" : "Humidité Trop Haute";
-            document.getElementById('stat-hum').className = `text-[10px] mt-2 font-bold uppercase ${avgH <= maxH ? 'text-emerald-500' : 'text-red-500'}`;
+            const humDisp = document.getElementById('res-hum-display');
+            humDisp.innerText = `Moyenne actuelle: ${avgH.toFixed(2)} %`;
+            humDisp.className = `text-[10px] mt-2 font-bold uppercase ${avgH <= maxH && totalSacs > 0 ? 'text-emerald-500' : 'text-red-500'}`;
 
-            const gEl = document.getElementById('res-grain');
-            gEl.innerText = avgG.toFixed(2);
-            gEl.className = `text-3xl font-mono font-bold ${avgG >= minG && totalSacs > 0 ? 'text-emerald-400' : 'text-red-500'}`;
-            document.getElementById('stat-grain').innerText = avgG >= minG ? "Grainage Conforme" : "Grainage Trop Faible";
-            document.getElementById('stat-grain').className = `text-[10px] mt-2 font-bold uppercase ${avgG >= minG ? 'text-emerald-500' : 'text-red-500'}`;
+            const grainDisp = document.getElementById('res-grain-display');
+            grainDisp.innerText = `Moyenne actuelle: ${avgG.toFixed(2)}`;
+            grainDisp.className = `text-[10px] mt-2 font-bold uppercase ${avgG >= minG && totalSacs > 0 ? 'text-emerald-500' : 'text-red-500'}`;
 
             document.getElementById('res-poids').innerText = ((totalSacs * KILO_FIXE) / 1000).toFixed(2);
         }
@@ -169,12 +170,9 @@
             const target = parseInt(document.getElementById('target-sacs').value);
             const maxH = parseFloat(document.getElementById('max-hum').value);
             
-            // Logique intelligente : 
-            // 1. On trie par grainage décroissant (on veut la meilleure qualité)
-            // 2. On essaie de remplir jusqu'à la cible en surveillant l'humidité
             let sorted = [...inventory].sort((a, b) => {
-                // Priorité au grainage, mais si humidité critique, on privilégie le sec
-                if (a.h > maxH) return 1;
+                if (a.h > maxH && b.h <= maxH) return 1;
+                if (b.h > maxH && a.h <= maxH) return -1;
                 return b.g - a.g;
             });
 
@@ -182,16 +180,12 @@
             inventory.forEach(l => l.pulled = 0);
 
             for(let lot of sorted) {
-                let indexOrigine = inventory.findIndex(l => l === lot);
+                let idx = inventory.findIndex(l => l.id === lot.id);
                 let prendre = Math.min(lot.stock, restant);
-                
-                // Vérification si ce lot fait exploser l'humidité
-                // (Approche simplifiée du solver)
-                inventory[indexOrigine].pulled = prendre;
+                inventory[idx].pulled = prendre;
                 restant -= prendre;
                 if(restant <= 0) break;
             }
-
             saveAndRender();
         }
 
@@ -206,17 +200,15 @@
 
             inventory.forEach((lot, i) => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50 transition group";
+                tr.className = "hover:bg-gray-50 transition";
                 tr.innerHTML = `
-                    <td class="p-5">
-                        <input type="text" value="${lot.id}" oninput="updateField(${i}, 'id', this.value)" class="font-bold text-gray-700 outline-none bg-transparent focus:text-amber-600">
-                    </td>
+                    <td class="p-5 font-bold text-black text-sm uppercase">${lot.id}</td>
                     <td class="p-5 bg-amber-50/50">
-                        <input type="number" value="${lot.pulled}" oninput="updateField(${i}, 'pulled', this.value)" class="w-24 p-2 bg-white border border-amber-200 rounded-xl text-amber-700 font-black shadow-sm input-smart">
+                        <input type="number" value="${lot.pulled}" oninput="updateField(${i}, 'pulled', this.value)" class="w-24 p-2 bg-white border border-amber-200 rounded-xl text-amber-700 font-black shadow-sm outline-none">
                     </td>
                     <td class="p-5 font-mono text-sm text-gray-500 font-bold" id="qty-${i}">0.0</td>
                     <td class="p-5">
-                        <input type="number" value="${lot.stock}" oninput="updateField(${i}, 'stock', this.value)" class="w-20 p-2 border border-gray-100 rounded-lg outline-none focus:border-gray-300">
+                        <input type="number" value="${lot.stock}" oninput="updateField(${i}, 'stock', this.value)" class="w-20 p-2 border border-gray-100 rounded-lg outline-none text-black">
                     </td>
                     <td class="p-5">
                         <input type="number" step="0.1" value="${lot.h}" oninput="updateField(${i}, 'h', this.value)" class="w-16 p-1 text-sm font-bold text-gray-600 outline-none">
@@ -224,9 +216,7 @@
                     <td class="p-5">
                         <input type="number" value="${lot.g}" oninput="updateField(${i}, 'g', this.value)" class="w-16 p-1 text-sm font-bold text-gray-600 outline-none">
                     </td>
-                    <td class="p-5">
-                        <input type="number" step="0.1" value="${lot.m}" oninput="updateField(${i}, 'm', this.value)" class="w-16 p-1 text-sm font-bold text-gray-600 outline-none">
-                    </td>
+                    <td class="p-5 text-gray-600 font-bold text-sm">${lot.m} %</td>
                     <td class="p-5 text-center">
                         <button onclick="supprimerLot(${i})" class="text-gray-300 hover:text-red-500 transition-colors">
                             <i class="fas fa-times-circle"></i>
@@ -239,14 +229,12 @@
         }
 
         function toutEffacer() {
-            if(confirm("Voulez-vous réinitialiser tout l'inventaire ?")) {
+            if(confirm("Réinitialiser l'inventaire ?")) {
                 inventory = [];
                 saveAndRender();
             }
         }
-
-        render = saveAndRender; 
-        render();
+        saveAndRender();
     </script>
 </body>
 </html>
