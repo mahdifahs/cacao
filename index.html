@@ -3,233 +3,428 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cacao Optimizer | Expert Edition</title>
+    <title>Cacao Optimizer V4 | Apple Pro Display</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: radial-gradient(circle at top right, #fdfcfb 0%, #e2d1c3 100%); min-height: 100vh; color: #2d3436; }
-        .glass-nav { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(255, 255, 255, 0.4); }
-        .soft-card { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.02); }
-        .input-smooth { background: rgba(255, 255, 255, 0.8); border-radius: 12px; border: 1px solid transparent; transition: all 0.3s; }
-        .input-smooth:focus { background: white; border-color: #d4a373; outline: none; }
-        .btn-smooth { background: #2d3436; color: white; border-radius: 20px; transition: all 0.3s ease; font-weight: 800; }
-        .btn-smooth:hover { background: #d4a373; transform: scale(1.05); }
-        .avg-pill { background: white; padding: 8px 16px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        
+        :root {
+            --bg-body: #fbfbfd;
+            --bg-card: #ffffff;
+            --text-main: #1d1d1f;
+            --text-secondary: #86868b;
+            --border-color: #f2f2f7;
+            --input-bg: #f5f5f7;
+        }
+
+        .dark-mode {
+            --bg-body: #000000;
+            --bg-card: #1c1c1e;
+            --text-main: #f5f5f7;
+            --text-secondary: #a1a1a6;
+            --border-color: #2c2c2e;
+            --input-bg: #2c2c2e;
+        }
+
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body); color: var(--text-main); padding-top: 120px; transition: all 0.3s ease; }
+        [dir="rtl"] { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        .apple-nav {
+            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+            width: 95%; max-width: 1300px; height: 80px;
+            background: rgba(255, 255, 255, 0.7); backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 24px; border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08); z-index: 9999;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
+        }
+        .dark-mode .apple-nav {
+            background: rgba(28, 28, 30, 0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-group { display: flex; flex-direction: column; align-items: center; min-width: 100px; border-left: 1px solid var(--border-color); padding-left: 15px; }
+        [dir="rtl"] .stat-group { border-left: none; border-right: 1px solid var(--border-color); padding-left: 0; padding-right: 15px; }
+        .stat-group:first-child { border: none; }
+        
+        .stat-value { font-size: 18px; font-weight: 800; line-height: 1; margin-top: 4px; }
+        .stat-label { font-size: 9px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-marge { font-size: 10px; font-weight: 800; margin-top: 2px; }
+
+        .status-positive { color: #10b981; }
+        .status-negative { color: #ef4444; }
+        .status-neutral { color: #3b82f6; }
+
+        .card-apple { background: var(--bg-card); border-radius: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid var(--border-color); }
+        .input-apple { background: var(--input-bg); color: var(--text-main); border-radius: 12px; border: none; padding: 10px; font-weight: 700; text-align: center; width: 100%; transition: all 0.2s ease; }
+        .input-apple:focus { background: var(--bg-card); outline: 2px solid #0071e3; }
+        
+        .btn-apple { background: #0071e3; color: white; padding: 10px 22px; border-radius: 980px; font-weight: 600; font-size: 13px; transition: 0.2s; }
+        .btn-theme, .btn-lang { background: var(--input-bg); color: var(--text-main); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.3s; font-weight: bold; font-size: 11px; }
+
+        .excel-table th { background: var(--input-bg); color: var(--text-secondary); font-size: 10px; text-transform: uppercase; padding: 12px; border: 1px solid var(--border-color); }
+        .excel-table td { border: 1px solid var(--border-color); padding: 10px; font-size: 12px; font-weight: 700; text-align: center; }
+        
+        /* Styles pour l'export PDF */
+        .pdf-page-break { page-break-before: always; }
+        #pdf-export-container { padding: 40px; background: white; color: black; }
     </style>
 </head>
-<body class="pb-20">
+<body>
 
-    <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-7xl">
-        <div class="glass-nav rounded-[2.5rem] px-8 py-4 flex justify-between items-center shadow-2xl">
-            <div class="flex flex-col">
-                <h1 class="text-xl font-black tracking-tighter">CACAO <span class="text-[#d4a373]">OPTIMIZER</span></h1>
-                <span class="text-[8px] font-bold uppercase tracking-[0.3em] opacity-40">Expert Mode</span>
+    <nav class="apple-nav">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-black rounded-xl flex items-center justify-center text-white"><i class="fas fa-leaf"></i></div>
+            <div class="hidden md:block">
+                <h1 class="text-sm font-black tracking-tight" data-i18n="app-title">CACAO OPTIMIZER</h1>
+                <p class="text-[9px] text-gray-400 font-bold uppercase" data-i18n="app-subtitle">Moyennes en Temps Réel</p>
             </div>
+        </div>
 
-            <div class="hidden lg:flex items-center gap-4">
-                <div class="avg-pill flex items-center gap-2">
-                    <span class="text-[9px] font-black text-gray-400 uppercase">H</span>
-                    <span id="stat-hum" class="text-sm font-black">0.00%</span>
-                </div>
-                <div class="avg-pill flex items-center gap-2">
-                    <span class="text-[9px] font-black text-gray-400 uppercase">G</span>
-                    <span id="stat-grain" class="text-sm font-black">0.00</span>
-                </div>
-                <div class="avg-pill flex items-center gap-2">
-                    <span class="text-[9px] font-black text-rose-300 uppercase">M</span>
-                    <span id="stat-moisi" class="text-sm font-black text-rose-500">0.00%</span>
-                </div>
-                <div class="avg-pill flex items-center gap-2">
-                    <span class="text-[9px] font-black text-amber-600 uppercase">D</span>
-                    <span id="stat-dechet" class="text-sm font-black text-amber-700">0.00%</span>
-                </div>
+        <div class="flex items-center gap-2 lg:gap-8">
+            <div class="stat-group">
+                <span class="stat-label">H-MIX</span>
+                <span id="nav-h" class="stat-value">0.00%</span>
+                <span id="marge-h" class="stat-marge">--</span>
             </div>
+            <div class="stat-group">
+                <span class="stat-label">G-MOY</span>
+                <span id="nav-g" class="stat-value">0.00</span>
+                <span id="marge-g" class="stat-marge">--</span>
+            </div>
+            <div class="stat-group">
+                <span class="stat-label">M-MOY</span>
+                <span id="nav-m" class="stat-value">0.00%</span>
+                <span id="marge-m" class="stat-marge">--</span>
+            </div>
+            <div class="stat-group">
+                <span class="stat-label">D-MOY</span>
+                <span id="nav-d" class="stat-value status-neutral">0.00%</span>
+                <span id="marge-d" class="stat-marge">--</span>
+            </div>
+            <div class="stat-group border-l-2 border-blue-500 ml-4 px-2">
+                <span class="stat-label" data-i18n="tonnage">TONNAGE</span>
+                <span id="nav-t" class="stat-value text-blue-600">0.00 T</span>
+                <span id="nav-s" class="stat-marge text-gray-400">0 SACS</span>
+            </div>
+        </div>
 
-            <div class="flex items-center gap-3">
-                <button onclick="resoudreOptimisation()" class="btn-smooth px-6 py-2 text-[10px] uppercase tracking-widest">Optimiser</button>
-                <button onclick="ajouterLot()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#d4a373]/10 text-[#d4a373] hover:bg-[#d4a373] hover:text-white transition-all">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
+        <div class="flex gap-2 items-center">
+            <button onclick="exportToPDF()" class="btn-theme" title="Exporter en PDF"><i class="fas fa-file-pdf"></i></button>
+            <button onclick="toggleLang()" class="btn-lang" id="lang-btn">FR</button>
+            <button onclick="toggleTheme()" class="btn-theme"><i id="theme-icon" class="fas fa-moon"></i></button>
+            <button onclick="resoudreOptimisation()" class="btn-apple" data-i18n="btn-opti">Optimiser</button>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto mt-36 px-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-            <div class="soft-card p-6">
-                <p class="text-gray-400 text-[9px] font-black uppercase mb-4">Sacs Visés / Poids Sac</p>
-                <div class="flex items-center gap-2">
-                    <input type="number" id="target-sacs" value="416" oninput="calculer()" class="bg-transparent text-4xl font-black w-24 outline-none">
-                    <div class="h-8 w-px bg-gray-200"></div>
-                    <input type="number" step="0.1" id="poids-sac" value="60.3" oninput="calculer()" class="bg-transparent text-xl font-bold w-16 text-[#d4a373] outline-none">
-                </div>
+    <main class="max-w-[1400px] mx-auto px-6 space-y-8">
+        
+        <div class="card-apple p-8 flex flex-wrap lg:flex-nowrap items-center justify-between gap-6">
+            <div class="flex gap-6 items-center">
+                <div class="text-center"><p class="stat-label mb-2" data-i18n="target-bags">Sacs Cibles</p><input type="number" id="c-sacs" value="416" oninput="calculer()" class="text-3xl font-black w-24 outline-none bg-transparent"></div>
+                <div class="text-center border-l border-gray-200 pl-6"><p class="stat-label mb-2" data-i18n="weight-bag">Poids/Sac</p><input type="number" id="c-kg" value="60.3" oninput="calculer()" class="text-3xl font-black w-24 outline-none text-blue-600 bg-transparent"></div>
             </div>
-
-            <div class="soft-card p-6 flex flex-col justify-between">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-[9px] font-black uppercase text-gray-400">H-Max %</span>
-                    <input type="number" step="0.1" id="max-hum" value="7.5" oninput="calculer()" class="input-smooth w-14 p-1 text-center font-bold">
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-[9px] font-black uppercase text-gray-400">G-Min</span>
-                    <input type="number" id="min-grain" value="110" oninput="calculer()" class="input-smooth w-14 p-1 text-center font-bold">
-                </div>
-            </div>
-
-            <div class="soft-card p-6 flex flex-col justify-between">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-[9px] font-black uppercase text-gray-400">M-Max %</span>
-                    <input type="number" step="0.1" id="max-moisi" value="5.0" oninput="calculer()" class="input-smooth w-14 p-1 text-center font-bold">
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-[9px] font-black uppercase text-gray-400">D-Max %</span>
-                    <input type="number" step="0.1" id="max-dechet" value="1.0" oninput="calculer()" class="input-smooth w-14 p-1 text-center font-bold">
-                </div>
-            </div>
-
-            <div class="soft-card p-6 bg-[#d4a373]/5">
-                <p class="text-[#d4a373] text-[9px] font-black uppercase mb-4">Poids Net Total</p>
-                <div class="flex items-baseline gap-2">
-                    <span id="res-poids" class="text-4xl font-black text-[#d4a373]">0.00</span>
-                    <span class="text-[#d4a373]/40 font-bold italic">T</span>
-                </div>
+            <div class="grid grid-cols-4 gap-4 flex-1 max-w-2xl">
+                <div><label class="stat-label">H-MAX %</label><input type="number" id="lim-h" value="7.5" oninput="calculer()" class="input-apple"></div>
+                <div><label class="stat-label">G-MIN</label><input type="number" id="lim-g" value="110" oninput="calculer()" class="input-apple"></div>
+                <div><label class="stat-label">M-MAX %</label><input type="number" id="lim-m" value="5.0" oninput="calculer()" class="input-apple"></div>
+                <div><label class="stat-label text-orange-500">D-MAX %</label><input type="number" id="lim-d" value="1.5" oninput="calculer()" class="input-apple"></div>
             </div>
         </div>
 
-        <div class="soft-card overflow-x-auto">
-            <table class="w-full text-left min-w-[1000px]">
-                <thead>
-                    <tr class="bg-white/40 text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                        <th class="px-6 py-5">Lot ID</th>
-                        <th class="px-6 py-5 text-[#d4a373]">Sacs à Tirer</th>
-                        <th class="px-6 py-5">Stock Dispo</th>
-                        <th class="px-6 py-5">Restant</th>
-                        <th class="px-6 py-5">H%</th>
-                        <th class="px-6 py-5">G</th>
-                        <th class="px-6 py-5 text-rose-400">M%</th>
-                        <th class="px-6 py-5 text-amber-600">D%</th>
-                        <th class="px-6 py-5 text-center">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="lots-container" class="divide-y divide-white/60"></tbody>
-            </table>
+        <div class="card-apple overflow-hidden">
+            <div class="px-8 py-5 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-xs font-extrabold uppercase tracking-tighter text-gray-500" data-i18n="inv-title">Inventaire des Lots</h3>
+                <button onclick="ajouterLot()" class="text-[10px] font-black uppercase text-blue-600" data-i18n="add-lot">+ Ajouter un lot</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-[10px] font-bold text-gray-400 uppercase border-b border-gray-50">
+                            <th class="px-8 py-4" data-i18n="th-id">Lot ID</th>
+                            <th class="px-4 py-4 text-blue-600" data-i18n="th-pull">Sacs à tirer</th>
+                            <th class="px-4 py-4" data-i18n="th-stock">Stock</th>
+                            <th class="px-4 py-4" data-i18n="th-rem">Restant</th>
+                            <th class="px-2 py-4 text-center">H%</th>
+                            <th class="px-2 py-4 text-center">G</th>
+                            <th class="px-2 py-4 text-center">M%</th>
+                            <th class="px-2 py-4 text-center text-orange-500">D%</th>
+                            <th class="px-8 py-4 text-right"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="lot-list" class="divide-y divide-gray-100 dark:divide-gray-800"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="card-apple p-8 h-[400px]" id="radar-container">
+                <h4 class="stat-label mb-6" data-i18n="chart-radar">Radar de Conformité</h4>
+                <canvas id="radarChart"></canvas>
+            </div>
+            <div class="card-apple p-8 h-[400px]" id="pie-container">
+                <h4 class="stat-label mb-6" data-i18n="chart-pie">Composition du Mix</h4>
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card-apple p-8 mb-20" id="excel-container">
+            <h4 class="stat-label mb-6 text-blue-600 font-black"><i class="fas fa-file-excel mr-2"></i> <span data-i18n="excel-title">Vue Rapport Excel</span></h4>
+            <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+                <table class="w-full excel-table" id="excel-table-to-export">
+                    <thead>
+                        <tr>
+                            <th data-i18n="th-id">ID Lot</th>
+                            <th data-i18n="th-pull">Sacs Tirés</th>
+                            <th data-i18n="th-weight">Poids (T)</th>
+                            <th>H (%)</th>
+                            <th data-i18n="th-grain">G (Grain)</th>
+                            <th>M (%)</th>
+                            <th>D (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="excel-view-body"></tbody>
+                </table>
+            </div>
         </div>
     </main>
 
+    <div id="pdf-export-content" style="display:none;"></div>
+
     <script>
-        let inventory = JSON.parse(localStorage.getItem('cacao_expert_v1')) || [
-            { id: "LOT-01", pulled: 0, stock: 500, h: 7.2, g: 105, m: 3.5, d: 0.5 },
-            { id: "LOT-02", pulled: 0, stock: 300, h: 7.8, g: 115, m: 4.2, d: 0.8 }
+        const i18n = {
+            fr: {
+                "app-title": "CACAO OPTIMIZER", "app-subtitle": "Moyennes en Temps Réel",
+                "tonnage": "TONNAGE", "btn-opti": "Optimiser", "target-bags": "Sacs Cibles",
+                "weight-bag": "Poids/Sac", "inv-title": "Inventaire des Lots", "add-lot": "+ Ajouter un lot",
+                "th-id": "Lot ID", "th-pull": "Sacs à tirer", "th-stock": "Stock", "th-rem": "Restant",
+                "chart-radar": "Radar de Conformité", "chart-pie": "Composition du Mix",
+                "excel-title": "Vue Rapport Excel", "th-weight": "Poids (T)", "th-grain": "Grain"
+            },
+            en: {
+                "app-title": "COCOA OPTIMIZER", "app-subtitle": "Real-Time Averages",
+                "tonnage": "TONNAGE", "btn-opti": "Optimize", "target-bags": "Target Bags",
+                "weight-bag": "Weight/Bag", "inv-title": "Batch Inventory", "add-lot": "+ Add Batch",
+                "th-id": "Batch ID", "th-pull": "Bags to Pull", "th-stock": "Stock", "th-rem": "Remaining",
+                "chart-radar": "Compliance Radar", "chart-pie": "Mix Composition",
+                "excel-title": "Excel Report View", "th-weight": "Weight (T)", "th-grain": "Bean Count"
+            },
+            ar: {
+                "app-title": "مُحسِّن الكاكاو", "app-subtitle": "المعدلات في الوقت الحقيقي",
+                "tonnage": "الحمولة", "btn-opti": "تحسين", "target-bags": "الأكياس المستهدفة",
+                "weight-bag": "وزن/كيس", "inv-title": "جرد الدفعات", "add-lot": "+ إضافة دفعة",
+                "th-id": "رقم الدفعة", "th-pull": "الأكياس المسحوبة", "th-stock": "المخزون", "th-rem": "المتبقي",
+                "chart-radar": "رادار المطابقة", "chart-pie": "تكوين المزيج",
+                "excel-title": "عرض تقرير إكسل", "th-weight": "الوزن (طن)", "th-grain": "التحبيب"
+            }
+        };
+
+        let currentLang = 'fr';
+
+        function toggleLang() {
+            const langs = ['fr', 'ar', 'en'];
+            currentLang = langs[(langs.indexOf(currentLang) + 1) % langs.length];
+            document.getElementById('lang-btn').innerText = currentLang.toUpperCase();
+            document.body.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.innerText = i18n[currentLang][key];
+            });
+            updateCharts(); 
+        }
+
+        let inventory = JSON.parse(localStorage.getItem('cacao_v4_final')) || [
+            { id: "LOT-01-SINF", pulled: 200, stock: 500, h: 7.2, g: 105, m: 2.5, d: 0.5 },
+            { id: "LOT-05-DOUA", pulled: 216, stock: 300, h: 8.1, g: 112, m: 4.2, d: 1.1 }
         ];
 
-        function save() { localStorage.setItem('cacao_expert_v1', JSON.stringify(inventory)); }
+        let radarChart, pieChart;
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('theme-icon');
+            icon.className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
+            updateCharts(); 
+        }
+
+        function save() { localStorage.setItem('cacao_v4_final', JSON.stringify(inventory)); }
 
         function ajouterLot() {
-            inventory.push({ id: "LOT-" + (inventory.length + 1), pulled: 0, stock: 0, h: 7.5, g: 110, m: 0, d: 0 });
+            inventory.unshift({ id: "LOT-NEW", pulled: 0, stock: 1000, h: 7.5, g: 110, m: 3, d: 0.5 });
             render();
         }
 
-        function supprimerLot(idx) {
-            inventory.splice(idx, 1);
-            render();
-        }
-
-        function updateField(idx, field, val) {
-            inventory[idx][field] = field === 'id' ? val : parseFloat(val) || 0;
-            if(field === 'pulled' && inventory[idx].pulled > inventory[idx].stock) {
-               // Optionnel: alerte si on tire plus que le stock
-            }
+        function render() {
+            const list = document.getElementById('lot-list');
+            list.innerHTML = '';
+            inventory.forEach((l, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-8 py-3"><input type="text" value="${l.id}" oninput="updateData(${i},'id',this.value)" class="font-bold outline-none bg-transparent w-full"></td>
+                    <td class="px-4 py-3"><input type="number" value="${l.pulled}" oninput="updateData(${i},'pulled',this.value)" class="input-apple text-blue-600"></td>
+                    <td class="px-4 py-3"><input type="number" value="${l.stock}" oninput="updateData(${i},'stock',this.value)" class="input-apple"></td>
+                    <td class="px-4 py-3 font-bold ${l.stock-l.pulled < 0 ? 'text-red-500' : 'text-gray-400'}">${l.stock-l.pulled}</td>
+                    <td class="px-2 py-3"><input type="number" step="0.1" value="${l.h}" oninput="updateData(${i},'h',this.value)" class="input-apple"></td>
+                    <td class="px-2 py-3"><input type="number" value="${l.g}" oninput="updateData(${i},'g',this.value)" class="input-apple"></td>
+                    <td class="px-2 py-3"><input type="number" step="0.1" value="${l.m}" oninput="updateData(${i},'m',this.value)" class="input-apple"></td>
+                    <td class="px-2 py-3"><input type="number" step="0.1" value="${l.d}" oninput="updateData(${i},'d',this.value)" class="input-apple"></td>
+                    <td class="px-8 py-3 text-right"><button onclick="inventory.splice(${i},1);render();" class="text-red-400"><i class="fas fa-trash"></i></button></td>
+                `;
+                list.appendChild(tr);
+            });
             calculer();
-            save();
-            renderStatsOnly(idx); // Mise à jour rapide du "Restant" sans re-render toute la table
         }
 
-        function renderStatsOnly(idx) {
-            const restantRow = document.getElementById(`restant-${idx}`);
-            if(restantRow) {
-                const res = inventory[idx].stock - inventory[idx].pulled;
-                restantRow.innerText = res;
-                restantRow.className = res < 0 ? "text-rose-500 font-bold" : "text-gray-400";
+        function updateData(i, field, val) {
+            inventory[i][field] = field === 'id' ? val : parseFloat(val) || 0;
+            save(); 
+            if(field === 'stock' || field === 'pulled') {
+                render();
+            } else {
+                calculer();
             }
         }
 
         function calculer() {
-            let totalSacs = 0, sumH = 0, sumG = 0, sumM = 0, sumD = 0;
-            const target = parseInt(document.getElementById('target-sacs').value) || 0;
-            const pSac = parseFloat(document.getElementById('poids-sac').value) || 0;
-            
-            inventory.forEach((lot) => {
-                totalSacs += lot.pulled;
-                sumH += (lot.pulled * lot.h);
-                sumG += (lot.pulled * lot.g);
-                sumM += (lot.pulled * lot.m);
-                sumD += (lot.pulled * lot.d);
+            let sS = 0, sH = 0, sG = 0, sM = 0, sD = 0;
+            const lh = parseFloat(document.getElementById('lim-h').value);
+            const lg = parseFloat(document.getElementById('lim-g').value);
+            const lm = parseFloat(document.getElementById('lim-m').value);
+            const ld = parseFloat(document.getElementById('lim-d').value);
+            const pkg = parseFloat(document.getElementById('c-kg').value);
+
+            const excelBody = document.getElementById('excel-view-body');
+            excelBody.innerHTML = '';
+
+            inventory.forEach(l => {
+                sS += l.pulled; sH += l.pulled * l.h; sG += l.pulled * l.g; sM += l.pulled * l.m; sD += l.pulled * l.d;
+                if(l.pulled > 0) {
+                    excelBody.innerHTML += `<tr>
+                        <td>${l.id}</td><td class="text-blue-600">${l.pulled}</td><td>${(l.pulled*pkg/1000).toFixed(2)}T</td>
+                        <td class="${l.h>lh?'text-red-500':''}">${l.h}</td><td>${l.g}</td><td>${l.m}</td><td>${l.d}</td>
+                    </tr>`;
+                }
             });
 
-            const avgH = totalSacs > 0 ? (sumH / totalSacs) : 0;
-            const avgG = totalSacs > 0 ? (sumG / totalSacs) : 0;
-            const avgM = totalSacs > 0 ? (sumM / totalSacs) : 0;
-            const avgD = totalSacs > 0 ? (sumD / totalSacs) : 0;
+            const ah = sS ? (sH/sS) : 0;
+            const ag = sS ? (sG/sS) : 0;
+            const am = sS ? (sM/sS) : 0;
+            const ad = sS ? (sD/sS) : 0;
 
-            document.getElementById('stat-hum').innerText = avgH.toFixed(2) + "%";
-            document.getElementById('stat-grain').innerText = avgG.toFixed(2);
-            document.getElementById('stat-moisi').innerText = avgM.toFixed(2) + "%";
-            document.getElementById('stat-dechet').innerText = avgD.toFixed(2) + "%";
-            document.getElementById('res-poids').innerText = ((totalSacs * pSac) / 1000).toFixed(2);
-            
-            // Coloration selon cibles
-            document.getElementById('stat-hum').style.color = avgH > parseFloat(document.getElementById('max-hum').value) ? '#ff7675' : '#2d3436';
-            document.getElementById('stat-moisi').style.color = avgM > parseFloat(document.getElementById('max-moisi').value) ? '#ff7675' : '#e11d48';
+            document.getElementById('nav-h').innerText = ah.toFixed(2) + "%";
+            document.getElementById('nav-g').innerText = ag.toFixed(1);
+            document.getElementById('nav-m').innerText = am.toFixed(2) + "%";
+            document.getElementById('nav-d').innerText = ad.toFixed(2) + "%";
+            document.getElementById('nav-t').innerText = (sS * pkg / 1000).toFixed(2) + " T";
+            document.getElementById('nav-s').innerText = sS + " SACS";
+
+            updateBadge('h', ah, lh, true);
+            updateBadge('g', ag, lg, false);
+            updateBadge('m', am, lm, true);
+            updateBadge('d', ad, ld, true);
+
+            updateCharts(ah, ag, am, ad, lh, lg, lm, ld);
+        }
+
+        function updateBadge(id, val, lim, isMax) {
+            const el = document.getElementById(`marge-${id}`);
+            const diff = lim - val;
+            const ok = isMax ? diff >= 0 : diff <= 0;
+            el.innerText = (ok ? '+' : '') + diff.toFixed(2);
+            el.className = `stat-marge ${ok ? 'status-positive' : 'status-negative animate-pulse'}`;
+        }
+
+        function updateCharts(ah, ag, am, ad, lh, lg, lm, ld) {
+            const isDark = document.body.classList.contains('dark-mode');
+            const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+            const textColor = isDark ? '#a1a1a6' : '#86868b';
+
+            const ctxR = document.getElementById('radarChart').getContext('2d');
+            if(radarChart) radarChart.destroy();
+            radarChart = new Chart(ctxR, {
+                type: 'radar',
+                data: {
+                    labels: ['H%', 'G/20', 'M%', 'D%'],
+                    datasets: [
+                        { label: currentLang === 'ar' ? 'الحالي' : 'Actual', data: [ah, ag/20, am, ad], borderColor: '#0071e3', backgroundColor: 'rgba(0,113,227,0.2)' },
+                        { label: currentLang === 'ar' ? 'الحد' : 'Limit', data: [lh, lg/20, lm, ld], borderColor: '#ef4444', borderDash: [5,5], fill: false }
+                    ]
+                },
+                options: { 
+                    maintainAspectRatio: false,
+                    scales: { r: { grid: { color: gridColor }, pointLabels: { color: textColor } } }
+                }
+            });
+
+            const active = inventory.filter(l => l.pulled > 0);
+            const ctxP = document.getElementById('pieChart').getContext('2d');
+            if(pieChart) pieChart.destroy();
+            pieChart = new Chart(ctxP, {
+                type: 'doughnut',
+                data: {
+                    labels: active.map(l => l.id),
+                    datasets: [{ data: active.map(l => l.pulled), backgroundColor: ['#0071e3', '#34c759', '#ff9500', '#af52de'] }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } } } }
+            });
         }
 
         function resoudreOptimisation() {
-            let target = parseInt(document.getElementById('target-sacs').value);
-            if(inventory.length === 0) return;
-
-            // Reset
+            let target = parseInt(document.getElementById('c-sacs').value);
             inventory.forEach(l => l.pulled = 0);
-
-            // Algorithme de tri intelligent : On priorise les lots avec le moins d'humidité et meilleur grainage
-            let sorted = [...inventory].sort((a, b) => a.h - b.h || b.g - a.g);
-
+            let sorted = [...inventory].sort((a, b) => a.h - b.h);
             for (let lot of sorted) {
                 if (target <= 0) break;
-                let originalIdx = inventory.findIndex(l => l.id === lot.id);
-                let aPrendre = Math.min(target, lot.stock);
-                inventory[originalIdx].pulled = aPrendre;
-                target -= aPrendre;
+                lot.pulled = Math.min(target, lot.stock);
+                target -= lot.pulled;
             }
-
             render();
-            if(target > 0) alert("Attention : Stock insuffisant pour atteindre " + document.getElementById('target-sacs').value + " sacs.");
         }
 
-        function render() {
-            const container = document.getElementById('lots-container');
-            container.innerHTML = '';
-            inventory.forEach((lot, i) => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-white/40 transition-all group";
-                tr.innerHTML = `
-                    <td class="px-6 py-4"><input type="text" value="${lot.id}" oninput="updateField(${i}, 'id', this.value)" class="bg-transparent border-none outline-none font-bold text-gray-700 w-full"></td>
-                    <td class="px-6 py-4"><input type="number" value="${lot.pulled}" oninput="updateField(${i}, 'pulled', this.value)" class="input-smooth w-20 p-2 font-black text-[#d4a373] text-center bg-white"></td>
-                    <td class="px-6 py-4"><input type="number" value="${lot.stock}" oninput="updateField(${i}, 'stock', this.value)" class="input-smooth w-20 p-2 font-bold text-gray-600 text-center"></td>
-                    <td class="px-6 py-4 text-xs font-bold" id="restant-${i}">${lot.stock - lot.pulled}</td>
-                    <td class="px-6 py-4"><input type="number" step="0.1" value="${lot.h}" oninput="updateField(${i}, 'h', this.value)" class="bg-transparent font-medium w-12 outline-none"></td>
-                    <td class="px-6 py-4"><input type="number" value="${lot.g}" oninput="updateField(${i}, 'g', this.value)" class="bg-transparent font-medium w-12 outline-none"></td>
-                    <td class="px-6 py-4"><input type="number" step="0.1" value="${lot.m}" oninput="updateField(${i}, 'm', this.value)" class="bg-transparent font-medium text-rose-500 w-12 outline-none"></td>
-                    <td class="px-6 py-4"><input type="number" step="0.1" value="${lot.d}" oninput="updateField(${i}, 'd', this.value)" class="bg-transparent font-medium text-amber-700 w-12 outline-none"></td>
-                    <td class="px-6 py-4 text-center">
-                        <button onclick="supprimerLot(${i})" class="text-gray-300 hover:text-rose-500 transition-colors"><i class="fas fa-trash-alt"></i></button>
-                    </td>
-                `;
-                container.appendChild(tr);
+        // --- FONCTION EXPORT PDF ---
+        function exportToPDF() {
+            const content = document.getElementById('pdf-export-content');
+            content.style.display = 'block';
+            content.innerHTML = `
+                <div id="pdf-container" style="padding: 20px; font-family: sans-serif;">
+                    <h1 style="text-align:center; color:#0071e3;">RAPPORT D'OPTIMISATION CACAO</h1>
+                    <p style="text-align:center; color:#86868b;">Date: ${new Date().toLocaleDateString()}</p>
+                    
+                    <div style="margin-top:40px;">
+                        <h2 style="font-size:16px; border-bottom:1px solid #eee; padding-bottom:10px;">TABLEAU DES TIRAGES</h2>
+                        ${document.getElementById('excel-container').innerHTML}
+                    </div>
+
+                    <div class="pdf-page-break" style="margin-top:50px; height: 800px;">
+                        <h2 style="font-size:16px; border-bottom:1px solid #eee; padding-bottom:10px;">RADAR DE CONFORMITÉ</h2>
+                        <img src="${radarChart.toBase64Image()}" style="width:100%; max-height:600px; object-fit:contain;">
+                    </div>
+
+                    <div class="pdf-page-break" style="margin-top:50px; height: 800px;">
+                        <h2 style="font-size:16px; border-bottom:1px solid #eee; padding-bottom:10px;">COMPOSITION DU MIX</h2>
+                        <img src="${pieChart.toBase64Image()}" style="width:100%; max-height:600px; object-fit:contain;">
+                    </div>
+                </div>
+            `;
+
+            const opt = {
+                margin: 10,
+                filename: 'Rapport_Cacao_Optimizer.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(content).save().then(() => {
+                content.style.display = 'none';
+                content.innerHTML = '';
             });
-            calculer();
         }
-        render();
+
+        window.onload = render;
     </script>
 </body>
 </html>
