@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cacao Optimizer V4 | Apple Pro Display</title>
+    <title>Cacao Optimizer V5 | Pro Solver & Alerts</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -67,9 +67,10 @@
         .excel-table th { background: var(--input-bg); color: var(--text-secondary); font-size: 10px; text-transform: uppercase; padding: 12px; border: 1px solid var(--border-color); }
         .excel-table td { border: 1px solid var(--border-color); padding: 10px; font-size: 12px; font-weight: 700; text-align: center; }
         
-        /* Styles pour l'export PDF */
-        .pdf-page-break { page-break-before: always; }
-        #pdf-export-container { padding: 40px; background: white; color: black; }
+        .alert-pill { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+        .alert-warning { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+        .alert-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
+        .alert-ok { background: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7; }
     </style>
 </head>
 <body>
@@ -121,6 +122,8 @@
 
     <main class="max-w-[1400px] mx-auto px-6 space-y-8">
         
+        <div id="alert-bar" class="flex gap-4 overflow-x-auto pb-2"></div>
+
         <div class="card-apple p-8 flex flex-wrap lg:flex-nowrap items-center justify-between gap-6">
             <div class="flex gap-6 items-center">
                 <div class="text-center"><p class="stat-label mb-2" data-i18n="target-bags">Sacs Cibles</p><input type="number" id="c-sacs" value="416" oninput="calculer()" class="text-3xl font-black w-24 outline-none bg-transparent"></div>
@@ -210,38 +213,25 @@
                 "th-id": "Batch ID", "th-pull": "Bags to Pull", "th-stock": "Stock", "th-rem": "Remaining",
                 "chart-radar": "Compliance Radar", "chart-pie": "Mix Composition",
                 "excel-title": "Excel Report View", "th-weight": "Weight (T)", "th-grain": "Bean Count"
-            },
-            ar: {
-                "app-title": "مُحسِّن الكاكاو", "app-subtitle": "المعدلات في الوقت الحقيقي",
-                "tonnage": "الحمولة", "btn-opti": "تحسين", "target-bags": "الأكياس المستهدفة",
-                "weight-bag": "وزن/كيس", "inv-title": "جرد الدفعات", "add-lot": "+ إضافة دفعة",
-                "th-id": "رقم الدفعة", "th-pull": "الأكياس المسحوبة", "th-stock": "المخزون", "th-rem": "المتبقي",
-                "chart-radar": "رادار المطابقة", "chart-pie": "تكوين المزيج",
-                "excel-title": "عرض تقرير إكسل", "th-weight": "الوزن (طن)", "th-grain": "التحبيب"
             }
         };
 
         let currentLang = 'fr';
+        let radarChart, pieChart;
+        let inventory = JSON.parse(localStorage.getItem('cacao_v5_solver')) || [
+            { id: "LOT-01-SEC", pulled: 200, stock: 500, h: 6.8, g: 105, m: 2.0, d: 0.4 },
+            { id: "LOT-05-HUM", pulled: 216, stock: 300, h: 8.5, g: 115, m: 5.5, d: 1.8 }
+        ];
 
         function toggleLang() {
-            const langs = ['fr', 'ar', 'en'];
-            currentLang = langs[(langs.indexOf(currentLang) + 1) % langs.length];
+            currentLang = currentLang === 'fr' ? 'en' : 'fr';
             document.getElementById('lang-btn').innerText = currentLang.toUpperCase();
-            document.body.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-            
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 el.innerText = i18n[currentLang][key];
             });
             updateCharts(); 
         }
-
-        let inventory = JSON.parse(localStorage.getItem('cacao_v4_final')) || [
-            { id: "LOT-01-SINF", pulled: 200, stock: 500, h: 7.2, g: 105, m: 2.5, d: 0.5 },
-            { id: "LOT-05-DOUA", pulled: 216, stock: 300, h: 8.1, g: 112, m: 4.2, d: 1.1 }
-        ];
-
-        let radarChart, pieChart;
 
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
@@ -250,7 +240,7 @@
             updateCharts(); 
         }
 
-        function save() { localStorage.setItem('cacao_v4_final', JSON.stringify(inventory)); }
+        function save() { localStorage.setItem('cacao_v5_solver', JSON.stringify(inventory)); }
 
         function ajouterLot() {
             inventory.unshift({ id: "LOT-NEW", pulled: 0, stock: 1000, h: 7.5, g: 110, m: 3, d: 0.5 });
@@ -281,20 +271,18 @@
         function updateData(i, field, val) {
             inventory[i][field] = field === 'id' ? val : parseFloat(val) || 0;
             save(); 
-            if(field === 'stock' || field === 'pulled') {
-                render();
-            } else {
-                calculer();
-            }
+            if(field === 'stock' || field === 'pulled') render(); else calculer();
         }
 
         function calculer() {
             let sS = 0, sH = 0, sG = 0, sM = 0, sD = 0;
-            const lh = parseFloat(document.getElementById('lim-h').value);
-            const lg = parseFloat(document.getElementById('lim-g').value);
-            const lm = parseFloat(document.getElementById('lim-m').value);
-            const ld = parseFloat(document.getElementById('lim-d').value);
-            const pkg = parseFloat(document.getElementById('c-kg').value);
+            const limits = {
+                h: parseFloat(document.getElementById('lim-h').value),
+                g: parseFloat(document.getElementById('lim-g').value),
+                m: parseFloat(document.getElementById('lim-m').value),
+                d: parseFloat(document.getElementById('lim-d').value),
+                pkg: parseFloat(document.getElementById('c-kg').value)
+            };
 
             const excelBody = document.getElementById('excel-view-body');
             excelBody.innerHTML = '';
@@ -303,30 +291,101 @@
                 sS += l.pulled; sH += l.pulled * l.h; sG += l.pulled * l.g; sM += l.pulled * l.m; sD += l.pulled * l.d;
                 if(l.pulled > 0) {
                     excelBody.innerHTML += `<tr>
-                        <td>${l.id}</td><td class="text-blue-600">${l.pulled}</td><td>${(l.pulled*pkg/1000).toFixed(2)}T</td>
-                        <td class="${l.h>lh?'text-red-500':''}">${l.h}</td><td>${l.g}</td><td>${l.m}</td><td>${l.d}</td>
+                        <td>${l.id}</td><td class="text-blue-600">${l.pulled}</td><td>${(l.pulled*limits.pkg/1000).toFixed(2)}T</td>
+                        <td class="${l.h>limits.h?'text-red-500':''}">${l.h}</td><td>${l.g}</td><td>${l.m}</td><td>${l.d}</td>
                     </tr>`;
                 }
             });
 
-            const ah = sS ? (sH/sS) : 0;
-            const ag = sS ? (sG/sS) : 0;
-            const am = sS ? (sM/sS) : 0;
-            const ad = sS ? (sD/sS) : 0;
+            const stats = {
+                h: sS ? (sH/sS) : 0, g: sS ? (sG/sS) : 0, m: sS ? (sM/sS) : 0, d: sS ? (sD/sS) : 0
+            };
 
-            document.getElementById('nav-h').innerText = ah.toFixed(2) + "%";
-            document.getElementById('nav-g').innerText = ag.toFixed(1);
-            document.getElementById('nav-m').innerText = am.toFixed(2) + "%";
-            document.getElementById('nav-d').innerText = ad.toFixed(2) + "%";
-            document.getElementById('nav-t').innerText = (sS * pkg / 1000).toFixed(2) + " T";
+            document.getElementById('nav-h').innerText = stats.h.toFixed(2) + "%";
+            document.getElementById('nav-g').innerText = stats.g.toFixed(1);
+            document.getElementById('nav-m').innerText = stats.m.toFixed(2) + "%";
+            document.getElementById('nav-d').innerText = stats.d.toFixed(2) + "%";
+            document.getElementById('nav-t').innerText = (sS * limits.pkg / 1000).toFixed(2) + " T";
             document.getElementById('nav-s').innerText = sS + " SACS";
 
-            updateBadge('h', ah, lh, true);
-            updateBadge('g', ag, lg, false);
-            updateBadge('m', am, lm, true);
-            updateBadge('d', ad, ld, true);
+            updateBadge('h', stats.h, limits.h, true);
+            updateBadge('g', stats.g, limits.g, false);
+            updateBadge('m', stats.m, limits.m, true);
+            updateBadge('d', stats.d, limits.d, true);
 
-            updateCharts(ah, ag, am, ad, lh, lg, lm, ld);
+            analyserStockGlobal(limits);
+            updateCharts(stats.h, stats.g, stats.m, stats.d, limits.h, limits.g, limits.m, limits.d);
+        }
+
+        // --- FONCTIONNALITÉ 1 OPTIMISÉE (SOLVER MULTI-CRITÈRES) ---
+        function resoudreOptimisation() {
+            const target = parseInt(document.getElementById('c-sacs').value);
+            const limH = parseFloat(document.getElementById('lim-h').value);
+            
+            // On réinitialise
+            inventory.forEach(l => l.pulled = 0);
+            
+            // Stratégie : Utiliser d'abord les lots qui "corrigent" le plus les limites (les plus secs, gros grains)
+            // On score chaque lot selon sa qualité globale
+            let scoredInventory = [...inventory].map(l => {
+                let score = (limH - l.h) * 10 + (l.g / 100); // Priorité forte à l'humidité
+                return { ...l, score };
+            }).sort((a, b) => b.score - a.score);
+
+            let remaining = target;
+            
+            // Remplissage intelligent
+            for (let lot of scoredInventory) {
+                if (remaining <= 0) break;
+                let take = Math.min(remaining, lot.stock);
+                
+                // Trouver l'index original pour mettre à jour l'objet réel
+                let originalLot = inventory.find(orig => orig.id === lot.id);
+                originalLot.pulled = take;
+                remaining -= take;
+            }
+            
+            render();
+            alert(remaining > 0 ? `Attention: Stock insuffisant pour atteindre ${target} sacs.` : "Optimisation terminée avec succès !");
+        }
+
+        // --- FONCTIONNALITÉ 5 (ALERTES PRÉDICTIVES) ---
+        function analyserStockGlobal(limits) {
+            const alertBar = document.getElementById('alert-bar');
+            alertBar.innerHTML = '';
+            
+            let totalStockSacs = 0, sumH = 0, sumG = 0;
+            inventory.forEach(l => {
+                let r = l.stock - l.pulled;
+                totalStockSacs += r;
+                sumH += r * l.h;
+                sumG += r * l.g;
+            });
+
+            const avgH = totalStockSacs ? (sumH / totalStockSacs) : 0;
+            const avgG = totalStockSacs ? (sumG / totalStockSacs) : 0;
+
+            // Alerte Humidité Stock
+            if (avgH > limits.h - 0.2) {
+                addAlert('danger', `Danger Humidité: Stock résiduel trop humide (${avgH.toFixed(2)}%)`);
+            } else if (avgH > limits.h - 0.5) {
+                addAlert('warning', `Vigilance Humidité: Stock résiduel limite (${avgH.toFixed(2)}%)`);
+            } else {
+                addAlert('ok', `Stock Humidité Sain (${avgH.toFixed(2)}%)`);
+            }
+
+            // Alerte Quantité
+            if (totalStockSacs < parseInt(document.getElementById('c-sacs').value) * 2) {
+                addAlert('danger', `Stock Critique: Moins de 2 tirages disponibles.`);
+            }
+        }
+
+        function addAlert(type, msg) {
+            const div = document.createElement('div');
+            div.className = `alert-pill alert-${type}`;
+            const icon = type === 'ok' ? 'check-circle' : 'exclamation-triangle';
+            div.innerHTML = `<i class="fas fa-${icon}"></i> ${msg}`;
+            document.getElementById('alert-bar').appendChild(div);
         }
 
         function updateBadge(id, val, lim, isMax) {
@@ -349,14 +408,11 @@
                 data: {
                     labels: ['H%', 'G/20', 'M%', 'D%'],
                     datasets: [
-                        { label: currentLang === 'ar' ? 'الحالي' : 'Actual', data: [ah, ag/20, am, ad], borderColor: '#0071e3', backgroundColor: 'rgba(0,113,227,0.2)' },
-                        { label: currentLang === 'ar' ? 'الحد' : 'Limit', data: [lh, lg/20, lm, ld], borderColor: '#ef4444', borderDash: [5,5], fill: false }
+                        { label: 'Mix Actuel', data: [ah, ag/20, am, ad], borderColor: '#0071e3', backgroundColor: 'rgba(0,113,227,0.2)' },
+                        { label: 'Limites', data: [lh, lg/20, lm, ld], borderColor: '#ef4444', borderDash: [5,5], fill: false }
                     ]
                 },
-                options: { 
-                    maintainAspectRatio: false,
-                    scales: { r: { grid: { color: gridColor }, pointLabels: { color: textColor } } }
-                }
+                options: { maintainAspectRatio: false, scales: { r: { grid: { color: gridColor }, pointLabels: { color: textColor } } } }
             });
 
             const active = inventory.filter(l => l.pulled > 0);
@@ -366,62 +422,25 @@
                 type: 'doughnut',
                 data: {
                     labels: active.map(l => l.id),
-                    datasets: [{ data: active.map(l => l.pulled), backgroundColor: ['#0071e3', '#34c759', '#ff9500', '#af52de'] }]
+                    datasets: [{ data: active.map(l => l.pulled), backgroundColor: ['#0071e3', '#34c759', '#ff9500', '#af52de', '#5856d6', '#ff2d55'] }]
                 },
                 options: { maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } } } }
             });
         }
 
-        function resoudreOptimisation() {
-            let target = parseInt(document.getElementById('c-sacs').value);
-            inventory.forEach(l => l.pulled = 0);
-            let sorted = [...inventory].sort((a, b) => a.h - b.h);
-            for (let lot of sorted) {
-                if (target <= 0) break;
-                lot.pulled = Math.min(target, lot.stock);
-                target -= lot.pulled;
-            }
-            render();
-        }
-
-        // --- FONCTION EXPORT PDF ---
         function exportToPDF() {
             const content = document.getElementById('pdf-export-content');
             content.style.display = 'block';
             content.innerHTML = `
-                <div id="pdf-container" style="padding: 20px; font-family: sans-serif;">
-                    <h1 style="text-align:center; color:#0071e3;">RAPPORT D'OPTIMISATION CACAO</h1>
-                    <p style="text-align:center; color:#86868b;">Date: ${new Date().toLocaleDateString()}</p>
-                    
-                    <div style="margin-top:40px;">
-                        <h2 style="font-size:16px; border-bottom:1px solid #eee; padding-bottom:10px;">TABLEAU DES TIRAGES</h2>
-                        ${document.getElementById('excel-container').innerHTML}
-                    </div>
-
-                    <div class="pdf-page-break" style="margin-top:50px; height: 800px;">
-                        <h2 style="font-size:16px; border-bottom:1px solid #eee; padding-bottom:10px;">RADAR DE CONFORMITÉ</h2>
-                        <img src="${radarChart.toBase64Image()}" style="width:100%; max-height:600px; object-fit:contain;">
-                    </div>
-
-                    <div class="pdf-page-break" style="margin-top:50px; height: 800px;">
-                        <h2 style="font-size:16px; border-bottom:1px solid #eee; padding-bottom:10px;">COMPOSITION DU MIX</h2>
-                        <img src="${pieChart.toBase64Image()}" style="width:100%; max-height:600px; object-fit:contain;">
-                    </div>
+                <div style="padding: 20px;">
+                    <h1 style="text-align:center; color:#0071e3;">RAPPORT QUALITÉ CACAO</h1>
+                    <p style="text-align:center;">Généré le ${new Date().toLocaleString()}</p>
+                    <div style="margin: 20px 0;">${document.getElementById('excel-container').innerHTML}</div>
+                    <img src="${radarChart.toBase64Image()}" style="width:45%; display:inline-block;">
+                    <img src="${pieChart.toBase64Image()}" style="width:45%; display:inline-block;">
                 </div>
             `;
-
-            const opt = {
-                margin: 10,
-                filename: 'Rapport_Cacao_Optimizer.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            html2pdf().set(opt).from(content).save().then(() => {
-                content.style.display = 'none';
-                content.innerHTML = '';
-            });
+            html2pdf().from(content).save('Rapport_Cacao.pdf').then(() => content.style.display = 'none');
         }
 
         window.onload = render;
