@@ -30,7 +30,13 @@
         }
 
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body); color: var(--text-main); padding-top: 120px; transition: all 0.3s ease; }
+        
+        /* Gestion du RTL pour l'Arabe */
         [dir="rtl"] { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        [dir="rtl"] .stat-group { border-left: none; border-right: 1px solid var(--border-color); padding-left: 0; padding-right: 15px; }
+        [dir="rtl"] .stat-group:first-child { border-right: none; }
+        [dir="rtl"] .ml-4 { margin-left: 0; margin-right: 1rem; }
+        [dir="rtl"] .border-l-2 { border-left-width: 0; border-right-width: 2px; }
 
         .apple-nav {
             position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
@@ -46,7 +52,6 @@
         }
 
         .stat-group { display: flex; flex-direction: column; align-items: center; min-width: 100px; border-left: 1px solid var(--border-color); padding-left: 15px; }
-        [dir="rtl"] .stat-group { border-left: none; border-right: 1px solid var(--border-color); padding-left: 0; padding-right: 15px; }
         .stat-group:first-child { border: none; }
         
         .stat-value { font-size: 18px; font-weight: 800; line-height: 1; margin-top: 4px; }
@@ -213,6 +218,14 @@
                 "th-id": "Batch ID", "th-pull": "Bags to Pull", "th-stock": "Stock", "th-rem": "Remaining",
                 "chart-radar": "Compliance Radar", "chart-pie": "Mix Composition",
                 "excel-title": "Excel Report View", "th-weight": "Weight (T)", "th-grain": "Bean Count"
+            },
+            ar: {
+                "app-title": "محسن الكاكاو", "app-subtitle": "المعدلات في الوقت الحقيقي",
+                "tonnage": "الحمولة", "btn-opti": "تحسين", "target-bags": "الأكياس المستهدفة",
+                "weight-bag": "وزن/كيس", "inv-title": "مخزون الحصص", "add-lot": "+ إضافة حصة",
+                "th-id": "معرف الحصة", "th-pull": "أكياس للسحب", "th-stock": "المخزون", "th-rem": "المتبقي",
+                "chart-radar": "رادار الامتثال", "chart-pie": "تكوين المزيج",
+                "excel-title": "عرض تقرير إكسل", "th-weight": "الوزن (طناً)", "th-grain": "عدد الحبوب"
             }
         };
 
@@ -224,8 +237,13 @@
         ];
 
         function toggleLang() {
-            currentLang = currentLang === 'fr' ? 'en' : 'fr';
+            if (currentLang === 'fr') currentLang = 'en';
+            else if (currentLang === 'en') currentLang = 'ar';
+            else currentLang = 'fr';
+
             document.getElementById('lang-btn').innerText = currentLang.toUpperCase();
+            document.body.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 el.innerText = i18n[currentLang][key];
@@ -306,7 +324,7 @@
             document.getElementById('nav-m').innerText = stats.m.toFixed(2) + "%";
             document.getElementById('nav-d').innerText = stats.d.toFixed(2) + "%";
             document.getElementById('nav-t').innerText = (sS * limits.pkg / 1000).toFixed(2) + " T";
-            document.getElementById('nav-s').innerText = sS + " SACS";
+            document.getElementById('nav-s').innerText = sS + (currentLang === 'ar' ? " أكياس" : " SACS");
 
             updateBadge('h', stats.h, limits.h, true);
             updateBadge('g', stats.g, limits.g, false);
@@ -317,43 +335,30 @@
             updateCharts(stats.h, stats.g, stats.m, stats.d, limits.h, limits.g, limits.m, limits.d);
         }
 
-        // --- FONCTIONNALITÉ 1 OPTIMISÉE (SOLVER MULTI-CRITÈRES) ---
         function resoudreOptimisation() {
             const target = parseInt(document.getElementById('c-sacs').value);
             const limH = parseFloat(document.getElementById('lim-h').value);
-            
-            // On réinitialise
             inventory.forEach(l => l.pulled = 0);
-            
-            // Stratégie : Utiliser d'abord les lots qui "corrigent" le plus les limites (les plus secs, gros grains)
-            // On score chaque lot selon sa qualité globale
             let scoredInventory = [...inventory].map(l => {
-                let score = (limH - l.h) * 10 + (l.g / 100); // Priorité forte à l'humidité
+                let score = (limH - l.h) * 10 + (l.g / 100); 
                 return { ...l, score };
             }).sort((a, b) => b.score - a.score);
-
             let remaining = target;
-            
-            // Remplissage intelligent
             for (let lot of scoredInventory) {
                 if (remaining <= 0) break;
                 let take = Math.min(remaining, lot.stock);
-                
-                // Trouver l'index original pour mettre à jour l'objet réel
                 let originalLot = inventory.find(orig => orig.id === lot.id);
                 originalLot.pulled = take;
                 remaining -= take;
             }
-            
             render();
-            alert(remaining > 0 ? `Attention: Stock insuffisant pour atteindre ${target} sacs.` : "Optimisation terminée avec succès !");
+            const msg = remaining > 0 ? (currentLang === 'ar' ? `تنبيه: المخزون غير كافٍ للوصول إلى ${target} كيس.` : `Attention: Stock insuffisant pour atteindre ${target} sacs.`) : (currentLang === 'ar' ? "تم التحسين بنجاح!" : "Optimisation terminée avec succès !");
+            alert(msg);
         }
 
-        // --- FONCTIONNALITÉ 5 (ALERTES PRÉDICTIVES) ---
         function analyserStockGlobal(limits) {
             const alertBar = document.getElementById('alert-bar');
             alertBar.innerHTML = '';
-            
             let totalStockSacs = 0, sumH = 0, sumG = 0;
             inventory.forEach(l => {
                 let r = l.stock - l.pulled;
@@ -361,22 +366,16 @@
                 sumH += r * l.h;
                 sumG += r * l.g;
             });
-
             const avgH = totalStockSacs ? (sumH / totalStockSacs) : 0;
-            const avgG = totalStockSacs ? (sumG / totalStockSacs) : 0;
-
-            // Alerte Humidité Stock
             if (avgH > limits.h - 0.2) {
-                addAlert('danger', `Danger Humidité: Stock résiduel trop humide (${avgH.toFixed(2)}%)`);
+                addAlert('danger', currentLang === 'ar' ? `خطر الرطوبة: المخزون المتبقي رطب جداً (${avgH.toFixed(2)}%)` : `Danger Humidité: Stock résiduel trop humide (${avgH.toFixed(2)}%)`);
             } else if (avgH > limits.h - 0.5) {
-                addAlert('warning', `Vigilance Humidité: Stock résiduel limite (${avgH.toFixed(2)}%)`);
+                addAlert('warning', currentLang === 'ar' ? `تنبيه الرطوبة: المخزون المتبقي في الحدود (${avgH.toFixed(2)}%)` : `Vigilance Humidité: Stock résiduel limite (${avgH.toFixed(2)}%)`);
             } else {
-                addAlert('ok', `Stock Humidité Sain (${avgH.toFixed(2)}%)`);
+                addAlert('ok', currentLang === 'ar' ? `رطوبة المخزون جيدة (${avgH.toFixed(2)}%)` : `Stock Humidité Sain (${avgH.toFixed(2)}%)`);
             }
-
-            // Alerte Quantité
             if (totalStockSacs < parseInt(document.getElementById('c-sacs').value) * 2) {
-                addAlert('danger', `Stock Critique: Moins de 2 tirages disponibles.`);
+                addAlert('danger', currentLang === 'ar' ? `نقص المخزون: متاح أقل من عمليتين سحب.` : `Stock Critique: Moins de 2 tirages disponibles.`);
             }
         }
 
@@ -400,7 +399,6 @@
             const isDark = document.body.classList.contains('dark-mode');
             const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
             const textColor = isDark ? '#a1a1a6' : '#86868b';
-
             const ctxR = document.getElementById('radarChart').getContext('2d');
             if(radarChart) radarChart.destroy();
             radarChart = new Chart(ctxR, {
@@ -408,13 +406,12 @@
                 data: {
                     labels: ['H%', 'G/20', 'M%', 'D%'],
                     datasets: [
-                        { label: 'Mix Actuel', data: [ah, ag/20, am, ad], borderColor: '#0071e3', backgroundColor: 'rgba(0,113,227,0.2)' },
-                        { label: 'Limites', data: [lh, lg/20, lm, ld], borderColor: '#ef4444', borderDash: [5,5], fill: false }
+                        { label: currentLang === 'ar' ? 'المزيج الحالي' : 'Mix Actuel', data: [ah, ag/20, am, ad], borderColor: '#0071e3', backgroundColor: 'rgba(0,113,227,0.2)' },
+                        { label: currentLang === 'ar' ? 'الحدود' : 'Limites', data: [lh, lg/20, lm, ld], borderColor: '#ef4444', borderDash: [5,5], fill: false }
                     ]
                 },
                 options: { maintainAspectRatio: false, scales: { r: { grid: { color: gridColor }, pointLabels: { color: textColor } } } }
             });
-
             const active = inventory.filter(l => l.pulled > 0);
             const ctxP = document.getElementById('pieChart').getContext('2d');
             if(pieChart) pieChart.destroy();
@@ -432,9 +429,9 @@
             const content = document.getElementById('pdf-export-content');
             content.style.display = 'block';
             content.innerHTML = `
-                <div style="padding: 20px;">
-                    <h1 style="text-align:center; color:#0071e3;">RAPPORT QUALITÉ CACAO</h1>
-                    <p style="text-align:center;">Généré le ${new Date().toLocaleString()}</p>
+                <div style="padding: 20px; direction: ${currentLang === 'ar' ? 'rtl' : 'ltr'}">
+                    <h1 style="text-align:center; color:#0071e3;">${currentLang === 'ar' ? 'تقرير جودة الكاكاو' : 'RAPPORT QUALITÉ CACAO'}</h1>
+                    <p style="text-align:center;">${new Date().toLocaleString()}</p>
                     <div style="margin: 20px 0;">${document.getElementById('excel-container').innerHTML}</div>
                     <img src="${radarChart.toBase64Image()}" style="width:45%; display:inline-block;">
                     <img src="${pieChart.toBase64Image()}" style="width:45%; display:inline-block;">
